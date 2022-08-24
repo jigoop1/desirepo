@@ -44,7 +44,7 @@ def routing(paramstring):
     if params:
         action = params.get('action', '')
         if action == '0':
-            from resources.lib.deccandelight import clear_cache
+            from resources.lib.base import clear_cache
             clear_cache()
         elif action == '1':
             from resources.lib.deccandelight import list_menu

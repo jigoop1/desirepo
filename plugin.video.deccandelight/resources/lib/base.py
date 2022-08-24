@@ -21,9 +21,11 @@ import re
 import base64
 import six
 import threading
+import traceback
 from six.moves import urllib_parse
 from bs4 import BeautifulSoup, SoupStrainer
 from kodi_six import xbmc, xbmcaddon, xbmcvfs
+from kodi_six.xbmcgui import Dialog
 from resources.lib import jsunpack
 from resources.lib import client
 import resolveurl
@@ -52,6 +54,22 @@ if PY2:
 else:
     import html
     _html_parser = html
+try:
+    import StorageServer
+except:
+    import storageserverdummy as StorageServer
+
+cache = StorageServer.StorageServer(_addonname if six.PY3 else _addonname.encode('utf8'), _settings('timeout'))
+
+
+def clear_cache():
+    """
+    Clear the cache database.
+    """
+    msg = 'Cached Data has been cleared'
+    cache.table_name = 'deccandelight'
+    cache.cacheDelete('%get%')
+    Dialog().notification(_addonname, msg, _icon, 3000, False)
 
 
 class Scraper(object):
@@ -131,7 +149,7 @@ class Scraper(object):
                       'business-', 'businessvoip.', 'toptencar.', 'serialinsurance.',
                       'youpdates', 'loanadvisor.', 'tamilray.', 'embedrip.', 'xpressvids.',
                       'beststopapne.', 'bestinforoom.', '?trembed=', 'tamilserene.',
-                      'tvnation.', 'techking.', 'etcscrs.', 'etcsr1.', 'etcrips.', 'etcsrs.']
+                      'tvnation.', 'techking.', 'etcscrs.', 'etcsr1.', 'etcrips.', 'etcsrs.', 'tvpost.cc']
 
         headers = {}
         if '|' in url:
@@ -385,13 +403,11 @@ class Scraper(object):
                 match = re.search(r"domainStream\s*=\s*([^;]+)", r)
                 if match:
                     surl = re.findall('file":"([^"]+)', match.group(1))[0]
-
                     if 'vidyard' in surl:
                         surl += '|Referer=https://play.vidyard.com/'
                     else:
                         surl = surl.replace('/hls/', '/own1hls/2020/')
                         surl += '|Referer=https://embed1.tamildbox.tips/'
-
                     surl += '&User-Agent={}'.format(mozhdr['User-Agent'])
                 else:
                     surl = url.replace('hls_vast', 'hls').replace('.tamildbox.tips', '.tamilgun.tv')

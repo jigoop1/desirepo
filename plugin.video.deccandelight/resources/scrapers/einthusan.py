@@ -15,7 +15,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
-from resources.lib.base import Scraper
+from resources.lib.base import Scraper, cache
 from bs4 import BeautifulSoup, SoupStrainer
 from six.moves import urllib_parse
 import re
@@ -25,12 +25,6 @@ import base64
 import random
 import time
 from kodi_six import xbmc
-
-try:
-    import StorageServer
-except:
-    import storageserverdummy as StorageServer
-cache = StorageServer.StorageServer('deccandelight', 8)
 
 
 class einthusan(Scraper):

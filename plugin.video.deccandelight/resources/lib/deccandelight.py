@@ -25,13 +25,9 @@ import time
 from six.moves import urllib_parse, urllib_request
 from kodi_six import xbmc, xbmcgui, xbmcplugin, xbmcaddon, xbmcvfs
 from resources.lib import client
+from resources.lib.base import cache, clear_cache
+
 from resources.scrapers import *  # NoQA
-
-
-try:
-    import StorageServer
-except:
-    import storageserverdummy as StorageServer
 
 # Get the plugin url in plugin:// notation.
 _url = sys.argv[0]
@@ -48,26 +44,22 @@ _path = _addon.getAddonInfo('path')
 _ipath = _path + '/resources/images/'
 _settings = _addon.getSetting
 _changelog = _path + '/changelog.txt'
+color1 = "gray" #'skyblue'  # 'blue'#'red'
+kodiver = float(xbmc.getInfoLabel('System.BuildVersion')[0:3])
 
-cache = StorageServer.StorageServer(_addonname if six.PY3 else _addonname.encode('utf8'), _settings('timeout'))
 msites = [
     'tgun', 'tamilian', 'tyogi', 'awatch', 'torm', 'kcine',
     'hlinks', 'einthusan', 'mrulz', 'mghar', 'b2t', 'omg',
     'wompk', 'cinevez', 'flinks', 'hflinks', 'bmov', 'ibomma'
 ]
+
 pDialog = xbmcgui.DialogProgress()
 makeLegalFilename = xbmc.makeLegalFilename if six.PY2 else xbmcvfs.makeLegalFilename
 
 
-def clear_cache():
-    """
-    Clear the cache database.
-    """
-    msg = 'Cached Data has been cleared'
-    cache.table_name = 'deccandelight'
-    cache.cacheDelete('%get%')
-    xbmcgui.Dialog().notification(_addonname, msg, _icon, 3000, False)
-
+def make_listitem(label='not provided'):
+    if kodiver < 19.0: return xbmcgui.ListItem(label=label, offscreen=True)
+    else: return xbmcgui.ListItem(label=label)
 
 mozhdr = 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-GB; rv:1.9.0.3) Gecko/2008092417 Firefox/3.0.3'
 safhdr = 'Mozilla/5.0 ({}) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/11.0 Mobile/15A356 Safari/604.1'
@@ -187,7 +179,6 @@ def list_menu(site):
             else:
                 is_folder = True
             listing.append((url, list_item, is_folder))
-
         elif _settings('adult') == 'true':
             list_item = xbmcgui.ListItem(label=title[digits:])
             list_item.setArt({'thumb': icon,
@@ -197,7 +188,6 @@ def list_menu(site):
             url = '{0}?action={1}&site={2}&iurl={3}'.format(_url, next_mode, site, urllib_parse.quote(iurl))
             is_folder = True
             listing.append((url, list_item, is_folder))
-
     xbmcplugin.addDirectoryItems(_handle, listing, len(listing))
     xbmcplugin.setContent(_handle, 'videos')
     xbmcplugin.endOfDirectory(_handle)
@@ -326,7 +316,7 @@ def list_items(site, iurl):
             poster = movie[1]
             if _settings('meta') == 'true' and site in msites:
                 from resources.lib.metautils import get_meta
-                meta = cache.cacheFunction(get_meta, title)
+                meta = get_meta(title)
                 if 'tmdb_id' in meta.keys():
                     list_item.setInfo('video', {'title': title, 'mediatype': 'video'})
                 else:
@@ -336,6 +326,7 @@ def list_items(site, iurl):
                         poster = meta.get('cover_url')
                     meta.pop('backdrop_url')
                     meta.pop('cover_url')
+                    meta.pop('cast')
                     meta.update({'mediatype': 'movie'})
                     list_item.setInfo('video', meta)
 
@@ -502,6 +493,7 @@ def downloadVideo(url, name):
 
         chunk = None
         chunks = []
+        notify = 25
 
         while True:
             downloaded = total
@@ -509,7 +501,17 @@ def downloadVideo(url, name):
                 downloaded += len(c)
             percent = min(100 * downloaded / content, 100)
 
-            _pbhook(downloaded, content, url, dp, name)
+            if _settings('dl_notify') != 'true':
+                _pbhook(downloaded, content, url, dp, name)
+            else:
+                try: dp.close()
+                except: pass
+                if percent >= notify:
+                    try:
+                        xbmcgui.Dialog().notification('Download:', '{}% - [I]{}[/I]'.format(str(percent), str(name)), _icon, 3000, False)
+                        notify+=25
+                    except Exception as e:
+                        xbmc.log(str(e), xbmc.LOGDEBUG)
 
             chunk = None
             error = False
@@ -779,8 +781,6 @@ def play_video(vid_url, dl=False):
         downloadVideo(stream_url, title)
 
     elif stream_url:
-        kodistr = xbmc.getInfoLabel('System.BuildVersion')
-        kodiver = float(kodistr[0:3])
         non_ia = ['yupp', 'SUNNXT', 'tamilgun', 'vidmojo', 'serafim', '__temp_']
         # xbmc.log('\n@@@@DD Final URL = {}\n'.format(stream_url), xbmc.LOGNOTICE)
 

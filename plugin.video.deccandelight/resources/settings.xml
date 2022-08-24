@@ -5,6 +5,7 @@
 		<setting label="Clear Cache" type="action" id="clear_cache" action="RunPlugin(plugin://plugin.video.deccandelight/?action=0)"/>
 		<setting label="Cache Timeout in hours" type="number" id="timeout" default="6"/> 
 		<setting type="lsep" label="Download Location" />
+        <setting id="dl_notify" type="bool" label="Download notify" default="true" />
 		<setting id="dlfolder" type="folder" label="Download Folder" default=""/>
 		<setting type="lsep" label="Meta Data" />
 		<setting id="meta" type="bool" label="Display Metadata for Movies" default="false"/>
