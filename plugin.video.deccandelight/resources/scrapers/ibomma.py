@@ -27,7 +27,7 @@ from six.moves import urllib_parse
 class ibomma(Scraper):
     def __init__(self):
         Scraper.__init__(self)
-        self.bu = 'https://ww11.ibomma.bar/' if self.mirror else 'https://www.ibomma.net/'
+        self.bu = 'https://www.ibomma.info/' if self.mirror else 'https://www.ibomma.net/'
         self.icon = self.ipath + 'ibomma.png'
         country = 'in' if self.mirror else 'us'
         surl = 'https://cdueyzmieouheiq8aib-{0}.securi.link/?label=telugu&q='.format(country)

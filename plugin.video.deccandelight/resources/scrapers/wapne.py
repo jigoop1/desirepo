@@ -26,7 +26,7 @@ class wapne(Scraper):
     def __init__(self):
         Scraper.__init__(self)
         self.bu = 'https://watchapne.co/web-series/channel/'
-        self.icon = self.ipath + 'apnetv.png'
+        self.icon = self.ipath + 'wapne.png'
         self.videos = []
         self.list = {'31ALT Balaji': self.bu + 'altbalaji',
                      '32ErosNow': self.bu + 'erosnow',

@@ -25,7 +25,7 @@ from resources.lib import client
 class hflinks(Scraper):
     def __init__(self):
         Scraper.__init__(self)
-        self.bu = 'https://filmlinks4u.cam/genre/'
+        self.bu = 'https://filmlinks4u.online/genre/'
         self.icon = self.ipath + 'hflinks.png'
         self.list = {'01Tamil Movies': self.bu + 'tamil/',
                      '02Telugu Movies': self.bu + 'telugu/',

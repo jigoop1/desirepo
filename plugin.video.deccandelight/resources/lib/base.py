@@ -21,17 +21,20 @@ import re
 import base64
 import six
 import threading
-import traceback
 from six.moves import urllib_parse
 from bs4 import BeautifulSoup, SoupStrainer
-from kodi_six import xbmc, xbmcaddon, xbmcvfs
-from kodi_six.xbmcgui import Dialog
+from kodi_six import xbmc, xbmcaddon, xbmcvfs, xbmcgui
 from resources.lib import jsunpack
 from resources.lib import client
 import resolveurl
+try:
+    import StorageServer
+except:
+    import storageserverdummy as StorageServer
 
 _addon = xbmcaddon.Addon()
 _addonname = _addon.getAddonInfo('name')
+_addonname = _addonname if six.PY3 else _addonname.encode('utf8')
 _version = _addon.getAddonInfo('version')
 _addonID = _addon.getAddonInfo('id')
 _icon = _addon.getAddonInfo('icon')
@@ -42,6 +45,7 @@ _settings = _addon.getSetting
 _timeout = _settings('timeout')
 PY2 = six.PY2
 LOGINFO = xbmc.LOGNOTICE if PY2 else xbmc.LOGINFO
+cache = StorageServer.StorageServer(_addonname, _settings('timeout'))
 
 mozhdr = {'User-Agent': 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-GB; rv:1.9.0.3) Gecko/2008092417 Firefox/3.0.3'}
 ioshdr = {'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 11_0_1 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/11.0 Mobile/15A402 Safari/604.1'}
@@ -54,12 +58,6 @@ if PY2:
 else:
     import html
     _html_parser = html
-try:
-    import StorageServer
-except:
-    import storageserverdummy as StorageServer
-
-cache = StorageServer.StorageServer(_addonname if six.PY3 else _addonname.encode('utf8'), _settings('timeout'))
 
 
 def clear_cache():
@@ -67,9 +65,9 @@ def clear_cache():
     Clear the cache database.
     """
     msg = 'Cached Data has been cleared'
-    cache.table_name = 'deccandelight'
+    cache.table_name = _addonname
     cache.cacheDelete('%get%')
-    Dialog().notification(_addonname, msg, _icon, 3000, False)
+    xbmcgui.Dialog().notification(_addonname, msg, _icon, 3000, False)
 
 
 class Scraper(object):
@@ -139,6 +137,10 @@ class Scraper(object):
                       'thiraifive.com', 'thiraisix.com', 'tamilalpha.com', 'tamilbeta.com',
                       'tamilbliss.com', 'thirailight.com', 'malarnaal.com']
 
+        apneembed = ['newstalks.co', 'newstrendz.co', 'newscurrent.co', 'newsdeskroom.co',
+                     'newsapne.co', 'newshook.co', 'newsbaba.co', 'articlesnewz.com',
+                     'articlesnew.com', 'webnewsarticles.com']
+
         embed_list = ['cineview', 'bollyheaven', 'videolinkz', 'vidzcode', 'escr.',
                       'embedzone', 'embedsr', 'fullmovie-hd', 'links4.pw', 'esr.',
                       'embedscr', 'embedrip', 'movembed', 'power4link.us', 'adly.biz',
@@ -149,7 +151,8 @@ class Scraper(object):
                       'business-', 'businessvoip.', 'toptencar.', 'serialinsurance.',
                       'youpdates', 'loanadvisor.', 'tamilray.', 'embedrip.', 'xpressvids.',
                       'beststopapne.', 'bestinforoom.', '?trembed=', 'tamilserene.',
-                      'tvnation.', 'techking.', 'etcscrs.', 'etcsr1.', 'etcrips.', 'etcsrs.', 'tvpost.cc']
+                      'tvnation.', 'techking.', 'etcscrs.', 'etcsr1.', 'etcrips.',
+                      'etcsrs.', 'tvpost.cc']
 
         headers = {}
         if '|' in url:
@@ -278,26 +281,6 @@ class Scraper(object):
             if (vidhost, url) not in videos:
                 videos.append((vidhost, url))
 
-        elif 'articlesnew.' in url or 'newscurrent.co' in url:
-            url = 'https://articlesnew.com/medium/?' + url.split('?')[-1]
-            headers.update(self.hdr)
-            html = client.request(url, headers=headers)
-            r = re.findall(r'''<form.+?action="([^"]+).+?name='([^']+)'\s*value='([^']+)''', html, re.DOTALL)
-            if r:
-                purl, name, value = r[0]
-                html = client.request(purl, post={name: value}, headers=headers)
-                s = re.findall(r"<iframe.+?src='([^']+)", html)
-                if s:
-                    strurl = s[0]
-                    if 'articlesnew.com' in strurl:
-                        strurl = strurl.split('url=')[-1]
-                    if 'hls' in strurl and 'videoapne' in strurl:
-                        strurl = strurl.replace('hls/,', '')
-                        strurl = strurl.replace(',.urlset/master.m3u8', '/v.mp4')
-                    vidhost = self.get_vidhost(strurl)
-                    if (vidhost, strurl) not in videos:
-                        videos.append((vidhost, strurl))
-
         elif 'videohost2.com' in url:
             headers.update(self.hdr)
             html = client.request(url, headers=headers)
@@ -364,6 +347,7 @@ class Scraper(object):
                         videos.append((vidhost, strurl))
                 else:
                     vidhost = self.get_vidhost(embedurl)
+                    embedurl += '|Referer={0}'.format(rurl)
                     if (vidhost, embedurl) not in videos:
                         videos.append((vidhost, embedurl))
             else:
@@ -376,6 +360,7 @@ class Scraper(object):
                             videos.append((vidhost, strurl))
                     else:
                         vidhost = self.get_vidhost(embedurl)
+                        embedurl += '|Referer={0}'.format(rurl)
                         if (vidhost, embedurl) not in videos:
                             videos.append((vidhost, embedurl))
             sources = re.findall(r'"linkserver".+?video="([^"]+)', html)
@@ -392,6 +377,7 @@ class Scraper(object):
                     if elink:
                         strurl = elink[0]
                         vidhost = self.get_vidhost(strurl)
+                        strurl += '|Referer={0}'.format(rurl)
                         if (vidhost, strurl) not in videos:
                             videos.append((vidhost, strurl))
 
@@ -403,11 +389,13 @@ class Scraper(object):
                 match = re.search(r"domainStream\s*=\s*([^;]+)", r)
                 if match:
                     surl = re.findall('file":"([^"]+)', match.group(1))[0]
+
                     if 'vidyard' in surl:
                         surl += '|Referer=https://play.vidyard.com/'
                     else:
                         surl = surl.replace('/hls/', '/own1hls/2020/')
                         surl += '|Referer=https://embed1.tamildbox.tips/'
+
                     surl += '&User-Agent={}'.format(mozhdr['User-Agent'])
                 else:
                     surl = url.replace('hls_vast', 'hls').replace('.tamildbox.tips', '.tamilgun.tv')
@@ -634,6 +622,42 @@ class Scraper(object):
                                 videos.append((vidhost, link))
                         else:
                             self.log('ResolveUrl cannot resolve : {}'.format(link))
+
+        elif any([x in url for x in apneembed]):
+            headers.update(self.hdr)
+            refresh = True
+            while refresh:
+                url = url.replace('/go.', '/')
+                if '/?' not in url:
+                    url = url.replace('?', '/?')
+                r = client.request(url, headers=headers, output='extended')
+                if r[2].get('Refresh'):
+                    url = r[2].get('Refresh').split(' ')[-1]
+                else:
+                    html = r[0]
+                    # redir = re.search(r'<meta http-equiv="refresh" content="([^"]+)', html)
+                    # if redir:
+                    #     url = redir.group(1).split('=')[-1]
+                    #     url = _html_parser.unescape(url)
+                    # else:
+                    refresh = False
+
+            r = re.findall(r'''<form.+?action="([^"]+)''', html, re.DOTALL)
+            if r:
+                purl = r[-1]
+                headers.update({'Referer': url})
+                ehtml = client.request(purl, post=' ', headers=headers)
+                s = re.findall(r"<iframe.+?src='([^']+)", ehtml)
+                if s:
+                    strurl = s[0]
+                    if 'url=' in strurl:
+                        strurl = strurl.split('url=')[-1]
+                    if 'hls' in strurl and 'videoapne' in strurl:
+                        strurl = strurl.replace('hls/,', '')
+                        strurl = strurl.replace(',.urlset/master.m3u8', '/v.mp4')
+                    vidhost = self.get_vidhost(strurl)
+                    if (vidhost, strurl) not in videos:
+                        videos.append((vidhost, strurl))
 
         elif '.box.' in url and '.mp4' in url:
             vidhost = self.get_vidhost(url)

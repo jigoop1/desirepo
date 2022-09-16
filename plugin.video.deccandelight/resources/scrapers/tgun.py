@@ -26,7 +26,7 @@ import json
 class tgun(Scraper):
     def __init__(self):
         Scraper.__init__(self)
-        self.bu = 'https://tamilgun.bio/'
+        self.bu = 'https://tamilgun.so/' if self.mirror else 'https://tamilgun.bio/'
         self.icon = self.ipath + 'tgun.png'
 
     def get_menu(self):
@@ -111,8 +111,6 @@ class tgun(Scraper):
                 else:
                     self.resolve_media(iurl, videos)
         except:
-            import traceback
-            traceback.print_exc()
             pass
 
         try:
@@ -126,8 +124,6 @@ class tgun(Scraper):
                     iurl = 'https:' + url
                 self.resolve_media(iurl, videos)
         except:
-            import traceback
-            traceback.print_exc()
             pass
 
         mlink = SoupStrainer('div', {'class': 'entry-excerpt'})
@@ -146,8 +142,6 @@ class tgun(Scraper):
                         iurl = 'https:' + iurl
                     self.resolve_media(iurl, videos)
         except:
-            import traceback
-            traceback.print_exc()
             pass
 
         try:
@@ -157,8 +151,6 @@ class tgun(Scraper):
                 if 'latest.htm' not in iurl:
                     self.resolve_media(iurl, videos)
         except:
-            import traceback
-            traceback.print_exc()
             pass
 
         r = re.findall('vdf-data-json">(.*?)<', html)

@@ -24,7 +24,7 @@ from resources.lib import client
 class mrulz(Scraper):
     def __init__(self):
         Scraper.__init__(self)
-        self.bu = 'https://ww4.7movierulz.tc/category/'
+        self.bu = 'https://ww2.5movierulz.tc/category/'
         self.icon = self.ipath + 'mrulz.png'
         self.list = {'01Tamil Movies': self.bu + 'tamil-movie/',
                      '02Telugu Movies': self.bu + 'telugu-movie/',

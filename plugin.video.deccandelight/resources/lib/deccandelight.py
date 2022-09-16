@@ -26,7 +26,6 @@ from six.moves import urllib_parse, urllib_request
 from kodi_six import xbmc, xbmcgui, xbmcplugin, xbmcaddon, xbmcvfs
 from resources.lib import client
 from resources.lib.base import cache, clear_cache
-
 from resources.scrapers import *  # NoQA
 
 # Get the plugin url in plugin:// notation.
@@ -44,23 +43,14 @@ _path = _addon.getAddonInfo('path')
 _ipath = _path + '/resources/images/'
 _settings = _addon.getSetting
 _changelog = _path + '/changelog.txt'
-color1 = "gray" #'skyblue'  # 'blue'#'red'
 kodiver = float(xbmc.getInfoLabel('System.BuildVersion')[0:3])
-
 msites = [
     'tgun', 'tamilian', 'tyogi', 'awatch', 'torm', 'kcine',
     'hlinks', 'einthusan', 'mrulz', 'mghar', 'b2t', 'omg',
     'wompk', 'cinevez', 'flinks', 'hflinks', 'bmov', 'ibomma'
 ]
-
 pDialog = xbmcgui.DialogProgress()
 makeLegalFilename = xbmc.makeLegalFilename if six.PY2 else xbmcvfs.makeLegalFilename
-
-
-def make_listitem(label='not provided'):
-    if kodiver < 19.0: return xbmcgui.ListItem(label=label, offscreen=True)
-    else: return xbmcgui.ListItem(label=label)
-
 mozhdr = 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-GB; rv:1.9.0.3) Gecko/2008092417 Firefox/3.0.3'
 safhdr = 'Mozilla/5.0 ({}) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/11.0 Mobile/15A356 Safari/604.1'
 
@@ -68,7 +58,6 @@ try:
     platform = re.findall(r'\(([^)]+)', xbmc.getUserAgent())[0]
 except:
     platform = 'Linux; Android 4.4.4; MI 5 Build/KTU84P'
-
 
 if _settings('version') != _version:
     _addon.setSetting('version', _version)
@@ -82,7 +71,6 @@ if _settings('version') != _version:
         announce = f.read()
     dialog = xbmcgui.Dialog()
     dialog.textviewer(heading, announce)
-
 
 sites = {'01tgun': 'Tamil Gun : [COLOR yellow]Tamil[/COLOR]',
          '02tamilian': 'Tamilian : [COLOR yellow]Tamil[/COLOR]',
@@ -98,25 +86,31 @@ sites = {'01tgun': 'Tamil Gun : [COLOR yellow]Tamil[/COLOR]',
          '45b2t': 'Bolly 2 Tolly : [COLOR magenta]Various[/COLOR]',
          '46omg': 'Online Movies Gold : [COLOR magenta]Various[/COLOR]',
          '47wompk': 'Online Movies PK : [COLOR magenta]Various[/COLOR]',
-         # '48onmw': 'Online Movie Watch : [COLOR magenta]Various[/COLOR]',
          '49cinevez': 'Cine Vez : [COLOR magenta]Various[/COLOR]',
-         # '51flinks': 'Film Links 4U : [COLOR magenta]Various[/COLOR]',
          '52hflinks': 'Film Links 4U Pro : [COLOR magenta]Various[/COLOR]',
-         # '55bmov': 'Bharat Movies : [COLOR magenta]Various[/COLOR]',
          '70thdbox': 'Tamil HD Box: [COLOR yellow]Tamil Catchup TV[/COLOR]',
          '71bbt': 'BigBoss Tamil: [COLOR yellow]Tamil Catchup TV[/COLOR]',
          '72skytamil': 'sky Tamil: [COLOR yellow]Tamil Catchup TV[/COLOR]',
          '73tdhool': 'Tamil Dhool : [COLOR yellow]Tamil Catchup TV[/COLOR]',
          '76manatv': 'Mana Telugu : [COLOR yellow]Telugu Catchup TV[/COLOR]',
-         '81wapne': 'Apne TV : [COLOR yellow]Hindi Catchup TV[/COLOR]',
+         '81apnetv': 'Apne TV : [COLOR yellow]Hindi Catchup TV[/COLOR]',
          '82desit': 'Desi Tashan : [COLOR yellow]Hindi Catchup TV[/COLOR]',
          '83pdesi': 'Play Desi : [COLOR yellow]Hindi Catchup TV[/COLOR]',
-         '84yodesi': 'Yo Desi : [COLOR yellow]Hindi Catchup TV[/COLOR]',
+         '84wapne': 'Watch Apne : [COLOR yellow]Hindi Catchup TV[/COLOR]',
+         '85yodesi': 'Yo Desi : [COLOR yellow]Hindi Catchup TV[/COLOR]',
          '91ary': 'Ary Digital : [COLOR yellow]Urdu Catchup TV[/COLOR]',
          '92geo': 'Geo TV : [COLOR yellow]Urdu Catchup TV[/COLOR]',
          '93hum': 'Hum TV : [COLOR yellow]Urdu Catchup TV[/COLOR]',
          '99gmala': 'Hindi Geetmala : [COLOR yellow]Hindi Songs[/COLOR]'
          }
+
+
+def make_listitem(*args, **kwargs):
+    if kodiver < 18.0:
+        li = xbmcgui.ListItem(*args, **kwargs)
+    else:
+        li = xbmcgui.ListItem(*args, offscreen=True, **kwargs)
+    return li
 
 
 def list_sites():
@@ -127,7 +121,7 @@ def list_sites():
     for site, title in sorted(six.iteritems(sites)):
         if _settings(site[2:]) == 'true':
             item_icon = _ipath + '{}.png'.format(site[2:])
-            list_item = xbmcgui.ListItem(label=title)
+            list_item = make_listitem(label=title)
             list_item.setArt({'thumb': item_icon,
                               'icon': item_icon,
                               'poster': item_icon,
@@ -136,7 +130,7 @@ def list_sites():
             is_folder = True
             listing.append((url, list_item, is_folder))
 
-    list_item = xbmcgui.ListItem(label='[COLOR yellow][B]Clear Cache[/B][/COLOR]')
+    list_item = make_listitem(label='[COLOR yellow][B]Clear Cache[/B][/COLOR]')
     item_icon = _ipath + 'ccache.png'
     list_item.setArt({'thumb': item_icon,
                       'icon': item_icon,
@@ -166,7 +160,7 @@ def list_menu(site):
             iurl, next_mode = iurl.split('MMMM')
 
         if 'Adult' not in title:
-            list_item = xbmcgui.ListItem(label=title[digits:])
+            list_item = make_listitem(label=title[digits:])
             list_item.setArt({'thumb': icon,
                               'icon': icon,
                               'poster': icon,
@@ -179,8 +173,9 @@ def list_menu(site):
             else:
                 is_folder = True
             listing.append((url, list_item, is_folder))
+
         elif _settings('adult') == 'true':
-            list_item = xbmcgui.ListItem(label=title[digits:])
+            list_item = make_listitem(label=title[digits:])
             list_item.setArt({'thumb': icon,
                               'icon': icon,
                               'poster': icon,
@@ -188,6 +183,7 @@ def list_menu(site):
             url = '{0}?action={1}&site={2}&iurl={3}'.format(_url, next_mode, site, urllib_parse.quote(iurl))
             is_folder = True
             listing.append((url, list_item, is_folder))
+
     xbmcplugin.addDirectoryItems(_handle, listing, len(listing))
     xbmcplugin.setContent(_handle, 'videos')
     xbmcplugin.endOfDirectory(_handle)
@@ -203,7 +199,7 @@ def list_top(site, iurl):
     for title, icon, iurl in menu:
         if 'MMMM' in iurl:
             nurl, nmode = iurl.split('MMMM')
-            list_item = xbmcgui.ListItem(label=title)
+            list_item = make_listitem(label=title)
             list_item.setArt({'thumb': icon,
                               'icon': icon,
                               'fanart': _fanart})
@@ -211,7 +207,7 @@ def list_top(site, iurl):
             is_folder = True
             listing.append((url, list_item, is_folder))
         else:
-            list_item = xbmcgui.ListItem(label=title)
+            list_item = make_listitem(label=title)
             list_item.setArt({'thumb': icon,
                               'icon': icon,
                               'poster': icon,
@@ -232,7 +228,7 @@ def list_second(site, iurl):
     menu, mode = cache.cacheFunction(scraper.get_second, iurl)
     listing = []
     for title, icon, iurl in menu:
-        list_item = xbmcgui.ListItem(label=title)
+        list_item = make_listitem(label=title)
         list_item.setArt({'thumb': icon,
                           'icon': icon,
                           'poster': icon,
@@ -262,7 +258,7 @@ def list_third(site, iurl):
     menu, mode = cache.cacheFunction(scraper.get_third, iurl)
     listing = []
     for title, icon, iurl in menu:
-        list_item = xbmcgui.ListItem(label=title)
+        list_item = make_listitem(label=title)
         list_item.setArt({'thumb': icon,
                           'icon': icon,
                           'poster': icon,
@@ -298,7 +294,7 @@ def list_items(site, iurl):
         title = movie[0]
         if title == '':
             title = 'Unknown'
-        list_item = xbmcgui.ListItem(label=title)
+        list_item = make_listitem(label=title)
         if 'Next Page' in title:
             nextmode = 7
             url = '{0}?action={1}&site={2}&iurl={3}'.format(_url, nextmode, site, urllib_parse.quote(movie[2]))
@@ -326,7 +322,6 @@ def list_items(site, iurl):
                         poster = meta.get('cover_url')
                     meta.pop('backdrop_url')
                     meta.pop('cover_url')
-                    meta.pop('cast')
                     meta.update({'mediatype': 'movie'})
                     list_item.setInfo('video', meta)
 
@@ -357,7 +352,7 @@ def list_videos(site, title, iurl, thumb):
     videos = cache.cacheFunction(scraper.get_videos, iurl)
     listing = []
     for name, video in videos:
-        list_item = xbmcgui.ListItem(label=name)
+        list_item = make_listitem(label=name)
         list_item.setArt({'thumb': thumb,
                           'icon': thumb,
                           'poster': thumb,
@@ -493,7 +488,6 @@ def downloadVideo(url, name):
 
         chunk = None
         chunks = []
-        notify = 25
 
         while True:
             downloaded = total
@@ -501,17 +495,7 @@ def downloadVideo(url, name):
                 downloaded += len(c)
             percent = min(100 * downloaded / content, 100)
 
-            if _settings('dl_notify') != 'true':
-                _pbhook(downloaded, content, url, dp, name)
-            else:
-                try: dp.close()
-                except: pass
-                if percent >= notify:
-                    try:
-                        xbmcgui.Dialog().notification('Download:', '{}% - [I]{}[/I]'.format(str(percent), str(name)), _icon, 3000, False)
-                        notify+=25
-                    except Exception as e:
-                        xbmc.log(str(e), xbmc.LOGDEBUG)
+            _pbhook(downloaded, content, url, dp, name)
 
             chunk = None
             error = False
@@ -640,7 +624,7 @@ def play_video(vid_url, dl=False):
     if 'ZZZZ' in vid_url:
         vid_url, title = vid_url.split('ZZZZ')
 
-    play_item = xbmcgui.ListItem(path=vid_url)
+    play_item = make_listitem(path=vid_url)
 
     if any([x in vid_url for x in streamer_list]):
         if 'einthusan.' in vid_url:
@@ -758,7 +742,7 @@ def play_video(vid_url, dl=False):
             else:
                 play_item.setPath(None)
         elif '.mp4' in vid_url:
-            if resolveurl.HostedMediaFile(vid_url):
+            if '|' not in vid_url and resolveurl.HostedMediaFile(vid_url):
                 stream_url = resolve_url(vid_url)
             else:
                 stream_url = vid_url
@@ -781,7 +765,7 @@ def play_video(vid_url, dl=False):
         downloadVideo(stream_url, title)
 
     elif stream_url:
-        non_ia = ['yupp', 'SUNNXT', 'tamilgun', 'vidmojo', 'serafim', '__temp_']
+        non_ia = ['yupp', 'SUNNXT', 'tamilgun', 'vidmojo', 'serafim', '__temp_', 'cloud']
         # xbmc.log('\n@@@@DD Final URL = {}\n'.format(stream_url), xbmc.LOGNOTICE)
 
         if kodiver >= 17.0 and not any(x in stream_url for x in non_ia):

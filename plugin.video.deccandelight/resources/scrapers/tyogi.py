@@ -26,7 +26,7 @@ import resolveurl
 class tyogi(Scraper):
     def __init__(self):
         Scraper.__init__(self)
-        self.bu = 'http://tamilvip.tv/home/'
+        self.bu = 'http://tamilyogi.tube/home/'
         self.icon = self.ipath + 'tyogi.png'
 
     def get_menu(self):
