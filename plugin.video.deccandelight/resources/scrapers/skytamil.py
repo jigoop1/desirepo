@@ -15,16 +15,11 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 '''
-from resources.lib.base import Scraper, cache
+from resources.lib.base import Scraper
 from bs4 import BeautifulSoup, SoupStrainer
 from six.moves import urllib_parse
 import re
 from resources.lib import client
-
-
-def get_ddg(url):
-    r = client.request('https://check.ddos-guard.net/check.js', referer=url, post='', output='cookie')
-    return r
 
 
 class skytamil(Scraper):
@@ -32,17 +27,22 @@ class skytamil(Scraper):
         Scraper.__init__(self)
         self.bu = 'https://www.skytamil.net/'
         self.icon = self.ipath + 'skytamil.png'
-        self.cj = ''
 
     def get_url(self, url, headers=None):
         if headers is None:
             headers = self.hdr
-        resp = client.request(url, headers=headers, cookie=self.cj, output='extended')
-        if int(resp[1]) == 403 and "DDoS protection by DDoS-GUARD" in resp[0]:
+        cpath = urllib_parse.urlparse(url).netloc + '.txt'
+        cookie = self.retrieve(cpath)
+        resp = client.request(url, headers=headers, cookie=cookie, error=True, output='extended')
+        if int(resp[1]) == 403 and resp[2].get('Server') == 'ddos-guard':
             host = urllib_parse.urljoin(url, '/')
-            self.cj = cache.cacheFunction(get_ddg, host)
-            resp = client.request(url, headers=headers, cookie=self.cj, output='extended')
-        self.cj = resp[4]
+            ddg = client.request('https://check.ddos-guard.net/check.js', referer=host)
+            src = re.findall(r"new Image\(\).src = '(.+?)';", ddg.decode('utf-8'))[0]
+            ddg2 = client.request(host[:-1] + src, referer=host, output='cookie')
+            cookie = resp[4] + '; ' + ddg2
+            resp = client.request(url, headers=headers, cookie=cookie, output='extended')
+            cookie += '; ' + resp[4]
+            self.store(cookie, cpath)
         return resp[0]
 
     def get_menu(self):
@@ -105,7 +105,9 @@ class skytamil(Scraper):
             for link in links:
                 iurl = link.get('src')
                 if 'videoslala.com' in iurl:
-                    iurl += '$$' + url
+                    iurl += '$$' + self.bu
+                elif 'vimeo.com' in iurl:
+                    iurl = iurl.split('?')[0] + '$$' + self.bu
                 self.resolve_media(iurl, videos)
         except:
             pass

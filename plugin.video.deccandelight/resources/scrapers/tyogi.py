@@ -26,13 +26,13 @@ import resolveurl
 class tyogi(Scraper):
     def __init__(self):
         Scraper.__init__(self)
-        self.bu = 'http://tamilyogi.tube/home/'
+        self.bu = 'https://tamilyogi.tube/home/'
         self.icon = self.ipath + 'tyogi.png'
 
     def get_menu(self):
         html = client.request(self.bu)
         items = {}
-        cats = re.findall('class="menu-item.+?href="?([^"]+)">([^<]+)', html, re.DOTALL)
+        cats = re.findall(r'''class="menu-item.+?href=['"]?([^'"\s]+)['"\s]*>([^<]+)''', html, re.DOTALL)
         sno = 1
         for cat, title in cats:
             cat = cat if cat.startswith('http') else self.bu[:-6] + cat

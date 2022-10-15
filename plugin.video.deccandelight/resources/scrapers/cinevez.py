@@ -26,7 +26,7 @@ from resources.lib import client
 class cinevez(Scraper):
     def __init__(self):
         Scraper.__init__(self)
-        self.bu = 'https://cinevez.vc/language/'
+        self.bu = 'https://cinevez.ac/language/'
         self.icon = self.ipath + 'cinevez.png'
         self.list = {'01Tamil Movies': self.bu + 'tamil/',
                      '02Telugu Movies': self.bu + 'telugu/',

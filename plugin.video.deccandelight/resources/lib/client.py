@@ -27,11 +27,11 @@ import random
 import base64
 import json
 import time
-from kodi_six import xbmc, xbmcvfs
+from kodi_six import xbmc, xbmcaddon, xbmcvfs
 try:
     import StorageServer
 except:
-    import storageserverdummy as StorageServer
+    from resources.lib import storageserverdummy as StorageServer
 
 # HTMLParser() deprecated in Python 3.4 and removed in Python 3.9
 if sys.version_info >= (3, 4, 0):
@@ -43,6 +43,8 @@ else:
 TRANSLATEPATH = xbmcvfs.translatePath if six.PY3 else xbmc.translatePath
 CERT_FILE = TRANSLATEPATH('special://xbmc/system/certs/cacert.pem')
 cache = StorageServer.StorageServer('deccandelight', 1)
+_addon = xbmcaddon.Addon()
+_ppath = _addon.getAddonInfo('profile')
 
 
 def request(
@@ -172,6 +174,11 @@ def request(
             if isinstance(cookie, dict):
                 cookie = '; '.join(['{0}={1}'.format(x, y) for x, y in six.iteritems(cookie)])
             _headers['Cookie'] = cookie
+        else:
+            cpath = urllib_parse.urlparse(url).netloc + '.txt'
+            ccookie = retrieve(cpath)
+            if ccookie:
+                _headers['Cookie'] = ccookie
 
         if 'Accept-Encoding' in _headers:
             pass
@@ -219,7 +226,7 @@ def request(
                     req.get_method = lambda: 'POST'
                     req.has_header = lambda header_name: (
                         header_name == 'Content-type'
-                        or urllib_request.Request.has_header(request, header_name)
+                        or urllib_request.Request.has_header(req, header_name)
                     )
 
         if limit == '0':
@@ -229,29 +236,50 @@ def request(
 
         try:
             response = urllib_request.urlopen(req, timeout=int(timeout))
-        except urllib_error.URLError:
-            return ''
         except urllib_error.HTTPError as e:
             response = e
             server = response.info().getheader('Server') if six.PY2 else response.info().get('Server')
-            if response.code == 403 and "cloudflare" in server.lower():
-                import ssl
-                ctx = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2 if six.PY3 else ssl.PROTOCOL_TLSv1_1)
-                ctx.set_alpn_protocols(['http/1.0', 'http/1.1'])
-                handle = [urllib_request.HTTPSHandler(context=ctx)]
-                opener = urllib_request.build_opener(*handle)
-                try:
-                    response = opener.open(req, timeout=30)
-                except:
-                    if 'return' in error:
-                        # Give up
-                        return ''
-                    else:
-                        if not error:
+            if response.code == 403:
+                if 'cloudflare' in server.lower():
+                    import ssl
+                    ctx = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2 if six.PY3 else ssl.PROTOCOL_TLSv1_1)
+                    ctx.set_alpn_protocols(['http/1.0', 'http/1.1'])
+                    handle = [urllib_request.HTTPSHandler(context=ctx)]
+                    opener = urllib_request.build_opener(*handle)
+                    try:
+                        response = opener.open(req, timeout=30)
+                    except:
+                        if 'return' in error:
+                            # Give up
                             return ''
+                        else:
+                            if not error:
+                                return ''
+                # elif 'ddos-guard' in server.lower():
+                #     host = urllib_parse.urljoin(url, '/')
+                #     ddg = client.request('https://check.ddos-guard.net/check.js', referer=host)
+                #     src = re.findall(r"new Image\(\).src = '(.+?)';", ddg.decode('utf-8'))[0]
+                #     ddg2 = client.request(host[:-1] + src, referer=host, output='cookie')
+                #     cookie = resp[4] + '; ' + ddg2
+                #     cpath = urllib_parse.urlparse(url).netloc + '.txt'
+                #     store(cookie, cpath)
+                #     try:
+                #         response = urllib_request.urlopen(req, timeout=int(timeout))
+                #     except:
+                #         if 'return' in error:
+                #             # Give up
+                #             return ''
+                #         else:
+                #             if not error:
+                #                 return ''
+                else:
+                    if not error:
+                        return ''
             else:
                 if not error:
                     return ''
+        except urllib_error.URLError:
+            return ''
 
         if output == 'cookie':
             try:
@@ -533,6 +561,30 @@ def randommobileagent():
 
 def agent():
     return 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/537.36'
+
+
+def store(ftext, fname):
+    fpath = TRANSLATEPATH(_ppath) + fname
+    if six.PY2:
+        with open(fpath, 'w') as f:
+            f.write(ftext)
+    else:
+        with open(fpath, 'w', encoding='utf-8') as f:
+            f.write(ftext)
+
+
+def retrieve(fname):
+    fpath = TRANSLATEPATH(_ppath) + fname
+    if xbmcvfs.exists(fpath):
+        if six.PY2:
+            with open(fpath) as f:
+                ftext = f.readlines()
+        else:
+            with open(fpath, encoding='utf-8') as f:
+                ftext = f.readlines()
+        return '\n'.join(ftext)
+    else:
+        return None
 
 
 class bfcookie:

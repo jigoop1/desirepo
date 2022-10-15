@@ -40,11 +40,13 @@ _addonID = _addon.getAddonInfo('id')
 _icon = _addon.getAddonInfo('icon')
 _fanart = _addon.getAddonInfo('fanart')
 _path = _addon.getAddonInfo('path')
+_ppath = _addon.getAddonInfo('profile')
 _ipath = _path + '/resources/images/'
 _settings = _addon.getSetting
 _timeout = _settings('timeout')
 PY2 = six.PY2
 LOGINFO = xbmc.LOGNOTICE if PY2 else xbmc.LOGINFO
+TRANSLATEPATH = xbmc.translatePath if PY2 else xbmcvfs.translatePath
 cache = StorageServer.StorageServer(_addonname, _settings('timeout'))
 
 mozhdr = {'User-Agent': 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-GB; rv:1.9.0.3) Gecko/2008092417 Firefox/3.0.3'}
@@ -105,6 +107,28 @@ class Scraper(object):
             caption = '@@@@DeccanDelight log'
         xbmc.log('{} = {}'.format(caption, text), LOGINFO)
 
+    def store(self, ftext, fname):
+        fpath = TRANSLATEPATH(_ppath) + fname
+        if PY2:
+            with open(fpath, 'w') as f:
+                f.write(ftext)
+        else:
+            with open(fpath, 'w', encoding='utf-8') as f:
+                f.write(ftext)
+
+    def retrieve(self, fname):
+        fpath = TRANSLATEPATH(_ppath) + fname
+        if xbmcvfs.exists(fpath):
+            if PY2:
+                with open(fpath) as f:
+                    ftext = f.readlines()
+            else:
+                with open(fpath, encoding='utf-8') as f:
+                    ftext = f.readlines()
+            return '\n'.join(ftext)
+        else:
+            return None
+
     def get_SearchQuery(self, sitename):
         keyboard = xbmc.Keyboard()
         keyboard.setHeading('Search ' + sitename)
@@ -152,7 +176,7 @@ class Scraper(object):
                       'youpdates', 'loanadvisor.', 'tamilray.', 'embedrip.', 'xpressvids.',
                       'beststopapne.', 'bestinforoom.', '?trembed=', 'tamilserene.',
                       'tvnation.', 'techking.', 'etcscrs.', 'etcsr1.', 'etcrips.',
-                      'etcsrs.', 'tvpost.cc']
+                      'etcsrs.', 'tvpost.cc', 'tellygossips.']
 
         headers = {}
         if '|' in url:
@@ -622,6 +646,37 @@ class Scraper(object):
                                 videos.append((vidhost, link))
                         else:
                             self.log('ResolveUrl cannot resolve : {}'.format(link))
+
+        elif 'serialghar.me' in url:
+            if '/vid/' in url and 'multiup' not in url:
+                headers.update(self.hdr)
+                ehtml = client.request(url, headers=headers)
+                s = re.search(r'''<iframe.+?src=['"]([^'"]+)''', ehtml, re.IGNORECASE)
+                if s:
+                    if resolveurl.HostedMediaFile(s.group(1)):
+                        vidhost = self.get_vidhost(s.group(1))
+                        if vidtxt != '':
+                            vidhost += ' | %s' % vidtxt
+                        if (vidhost, s.group(1)) not in videos:
+                            videos.append((vidhost, s.group(1)))
+                    else:
+                        self.log('ResolveUrl cannot resolve : {}'.format(s.group(1)))
+
+        elif 'viralnews.' in url:
+            headers.update(self.hdr)
+            r = client.request(url, headers=headers, output='extended')
+            url = r[2].get('Refresh').split(' ')[-1]
+            ehtml = client.request(url, headers=headers)
+            s = re.search(r'''<iframe.+?src=['"]([^'"]+)''', ehtml, re.IGNORECASE)
+            if s:
+                if resolveurl.HostedMediaFile(s.group(1)):
+                    vidhost = self.get_vidhost(s.group(1))
+                    if vidtxt != '':
+                        vidhost += ' | %s' % vidtxt
+                    if (vidhost, s.group(1)) not in videos:
+                        videos.append((vidhost, s.group(1)))
+                else:
+                    self.log('ResolveUrl cannot resolve : {}'.format(s.group(1)))
 
         elif any([x in url for x in apneembed]):
             headers.update(self.hdr)

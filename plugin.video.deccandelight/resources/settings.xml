@@ -23,6 +23,7 @@
 	<category label="Telugu Scrapers">
 		<setting id="awatch" type="bool" label="Andhra Watch" default="true"/>
 		<setting id="ibomma" type="bool" label="iBOMMA" default="true"/>
+		<setting id="dtelugu" type="bool" label="DesiTelugu" default="true"/>
 		<setting id="manatv" type="bool" label="Mana Telugu TV" default="true"/>
 	</category> 
 	<category label="Malayalam Scrapers">
@@ -37,6 +38,7 @@
 		<setting id="desit" type="bool" label="Desi Tashan" default="true"/>
 		<setting id="gmala" type="bool" label="Hindi Geetmala" default="true"/>
 		<setting id="pdesi" type="bool" label="Play Desi" default="true"/>
+		<setting id="sghar" type="bool" label="Serial Ghar" default="true"/>
 		<setting id="wapne" type="bool" label="Watch Apne" default="true"/>
 		<setting id="yodesi" type="bool" label="Yo Desi" default="true"/>
 	</category>

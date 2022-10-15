@@ -105,22 +105,19 @@ class manatv(Scraper):
     def get_videos(self, url):
         videos = []
         html = base64.b64decode(url).decode('utf8')
-        self.log(html)
-        links = re.findall('(<a.+?a>)', html)
+        links = re.findall('(<a.+?a>)', html, re.DOTALL)
         for link in links:
             vidurl = re.findall('href="([^"]+)', link)[0]
             vidtxt = re.findall('">([^<]+)', link)[0]
             if 'source=vidfy' in vidurl:
                 url = 'http://vidfy.me/player.php?vid=' + re.findall(r'\?url=([^&]+)', vidurl)[0]
-                headers = self.hdr
-                headers['Referer'] = 'http://desitelugu.com/'
-                html = client.request(url)
+                html = client.request(url, referer='http://desitelugu.net/')
                 if 'video is not available' not in html:
                     vidurl = re.findall('<source.+?src="([^"]+)', html)
                     if not vidurl:
                         vidurl = re.findall(r'src:\s*"([^"]+)', html)
                     if vidurl:
-                        vidurl += '|Referer={}&User-Agent={}'.format(url, self.hdr['User-Agent'])
+                        vidurl = vidurl[0] + '|Referer={}&User-Agent={}'.format(url, self.hdr['User-Agent'])
                         videos.append(('vidfy | {}'.format(vidtxt), vidurl))
             elif 'source=youtube' in vidurl:
                 vidurl = 'https://www.youtube.com/embed/' + re.findall(r'\?url=([^&]+)', vidurl)[0]
