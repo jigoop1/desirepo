@@ -1,9 +1,11 @@
-import hashlib
 import base64
+import hashlib
+import os
+
 import six
+
 from . import pyaes
 from .pkcs7 import PKCS7Encoder
-import os
 
 
 def evpKDF(

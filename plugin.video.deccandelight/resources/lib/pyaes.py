@@ -48,9 +48,10 @@ there clears it up.
 ####
 
 
-from array import array
-from six.moves import range
 import codecs
+from array import array
+
+from six.moves import range
 
 # Globals mandated by PEP 272:
 # http://www.python.org/dev/peps/pep-0272/

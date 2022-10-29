@@ -16,17 +16,19 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import sys
 import re
-import resolveurl
+import sys
 import tempfile
-import six
 import time
-from six.moves import urllib_parse, urllib_request
-from kodi_six import xbmc, xbmcgui, xbmcplugin, xbmcaddon, xbmcvfs
+
+import six
+from kodi_six import xbmc, xbmcaddon, xbmcgui, xbmcplugin, xbmcvfs
 from resources.lib import client
 from resources.lib.base import cache, clear_cache
 from resources.scrapers import *  # NoQA
+from six.moves import urllib_parse, urllib_request
+
+import resolveurl
 
 # Get the plugin url in plugin:// notation.
 _url = sys.argv[0]

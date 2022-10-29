@@ -15,18 +15,19 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 '''
-from resources.lib.base import Scraper
-from bs4 import BeautifulSoup, SoupStrainer
-from six.moves import urllib_parse
-import re
-from resources.lib import client
 import json
+import re
+
+from bs4 import BeautifulSoup, SoupStrainer
+from resources.lib import client
+from resources.lib.base import Scraper
+from six.moves import urllib_parse
 
 
 class tgun(Scraper):
     def __init__(self):
         Scraper.__init__(self)
-        self.bu = 'https://tamilgun.so/' if self.mirror else 'https://tamilgun.bio/'
+        self.bu = 'https://tamilgun.so/' if self.mirror else 'https://tamilgun.news/'
         self.icon = self.ipath + 'tgun.png'
 
     def get_menu(self):
@@ -149,6 +150,18 @@ class tgun(Scraper):
             for link in links:
                 iurl = link.get('src')
                 if 'latest.htm' not in iurl:
+                    self.resolve_media(iurl, videos)
+        except:
+            pass
+
+        mlink = SoupStrainer('article')
+        videoclass = BeautifulSoup(html, "html.parser", parse_only=mlink)
+
+        try:
+            links = videoclass.find_all('iframe')
+            for link in links:
+                iurl = link.get('src')
+                if 'bit.ly' not in iurl:
                     self.resolve_media(iurl, videos)
         except:
             pass

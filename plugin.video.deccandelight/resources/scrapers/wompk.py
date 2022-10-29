@@ -15,12 +15,13 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 '''
-from resources.lib.base import Scraper
-from bs4 import BeautifulSoup, SoupStrainer
-from six.moves import urllib_parse
-from resources.lib import client
-import re
 import json
+import re
+
+from bs4 import BeautifulSoup, SoupStrainer
+from resources.lib import client
+from resources.lib.base import Scraper
+from six.moves import urllib_parse
 
 
 class wompk(Scraper):

@@ -15,18 +15,19 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 '''
-from resources.lib.base import Scraper
-from bs4 import BeautifulSoup, SoupStrainer
-from six.moves import urllib_parse
-from kodi_six import xbmcgui
 import re
+
+from bs4 import BeautifulSoup, SoupStrainer
+from kodi_six import xbmcgui
 from resources.lib import client
+from resources.lib.base import Scraper
+from six.moves import urllib_parse
 
 
 class cinevez(Scraper):
     def __init__(self):
         Scraper.__init__(self)
-        self.bu = 'https://cinevez.ac/language/'
+        self.bu = 'https://cinevez.pe/language/'
         self.icon = self.ipath + 'cinevez.png'
         self.list = {'01Tamil Movies': self.bu + 'tamil/',
                      '02Telugu Movies': self.bu + 'telugu/',

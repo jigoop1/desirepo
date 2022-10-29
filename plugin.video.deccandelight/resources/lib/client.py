@@ -18,16 +18,19 @@
 '''
 
 
+import base64
+import gzip
+import json
+import random
 import re
 import sys
-import six
-from six.moves import urllib_request, urllib_parse, urllib_error, urllib_response, http_cookiejar
-import gzip
-import random
-import base64
-import json
 import time
+
+import six
 from kodi_six import xbmc, xbmcaddon, xbmcvfs
+from six.moves import (http_cookiejar, urllib_error, urllib_parse,
+                       urllib_request, urllib_response)
+
 try:
     import StorageServer
 except:
@@ -623,7 +626,8 @@ class bfcookie:
         return cookie
 
     def _decrypt(self, msg, key, iv):
-        from binascii import unhexlify, hexlify
+        from binascii import hexlify, unhexlify
+
         from . import pyaes
         msg = unhexlify(msg)
         key = unhexlify(key)

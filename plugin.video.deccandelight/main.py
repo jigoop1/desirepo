@@ -17,5 +17,7 @@
 """
 
 from sys import argv
+
 from resources.lib.router import routing
+
 routing(argv[2])

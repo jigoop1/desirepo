@@ -15,11 +15,12 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 '''
-from resources.lib.base import Scraper
-from bs4 import BeautifulSoup, SoupStrainer
-from six.moves import urllib_parse
 import re
+
+from bs4 import BeautifulSoup, SoupStrainer
 from resources.lib import client
+from resources.lib.base import Scraper
+from six.moves import urllib_parse
 
 
 class skytamil(Scraper):
@@ -47,9 +48,12 @@ class skytamil(Scraper):
 
     def get_menu(self):
         html = self.get_url(self.bu)
-        items = {}
+        items = {
+            '01Bigg Boss Tamil 6': self.bu + 'category/bigg-boss-tamil-season-6/',
+            '02Bigg Boss Telugu 6': self.bu + 'category/bigg-boss-telugu-6/'
+        }
         cats = re.findall('id="menu-item-(?!755|758|757).+?href="([^"]+)">([^<]+)', html, re.DOTALL)
-        sno = 1
+        sno = 3
         for caturl, cat in cats:
             items['{0:02d}{1}'.format(sno, cat)] = caturl
             sno += 1

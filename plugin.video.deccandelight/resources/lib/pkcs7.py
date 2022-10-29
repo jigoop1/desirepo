@@ -1,4 +1,5 @@
 import binascii
+
 import six
 from six.moves import range
 

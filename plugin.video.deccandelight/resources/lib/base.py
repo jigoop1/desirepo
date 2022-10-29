@@ -16,17 +16,19 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
+import base64
 import json
 import re
-import base64
-import six
 import threading
-from six.moves import urllib_parse
+
+import six
 from bs4 import BeautifulSoup, SoupStrainer
-from kodi_six import xbmc, xbmcaddon, xbmcvfs, xbmcgui
-from resources.lib import jsunpack
-from resources.lib import client
+from kodi_six import xbmc, xbmcaddon, xbmcgui, xbmcvfs
+from resources.lib import client, jsunpack
+from six.moves import urllib_parse
+
 import resolveurl
+
 try:
     import StorageServer
 except:

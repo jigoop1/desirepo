@@ -17,8 +17,9 @@
 """
 
 import re
-from resources.lib import access
+
 from metahandler import metahandlers
+from resources.lib import access
 
 metaget = metahandlers.MetaData(tmdb_api_key=access.tk, omdb_api_key=access.ok)
 
