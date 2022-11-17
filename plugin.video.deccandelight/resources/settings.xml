@@ -36,6 +36,7 @@
 		<setting id="hlinks" type="bool" label="Hindi Links 4 U" default="true"/>
 		<setting id="apnetv" type="bool" label="Apne TV" default="true"/>
 		<setting id="desit" type="bool" label="Desi Tashan" default="true"/>
+		<setting id="desiseri" type="bool" label="Desi Series" default="true"/>
 		<setting id="gmala" type="bool" label="Hindi Geetmala" default="true"/>
 		<setting id="pdesi" type="bool" label="Play Desi" default="true"/>
 		<setting id="sghar" type="bool" label="Serial Ghar" default="true"/>

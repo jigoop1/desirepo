@@ -28,23 +28,16 @@ from resources.lib.base import cache, clear_cache
 from resources.scrapers import *  # NoQA
 from six.moves import urllib_parse, urllib_request
 
-import resolveurl
+#import resolveurl
 
 # Get the plugin url in plugin:// notation.
 _url = sys.argv[0]
 # Get the plugin handle as an integer number.
 _handle = int(sys.argv[1])
 
-_addon = xbmcaddon.Addon()
-_addonname = _addon.getAddonInfo('name')
-_version = _addon.getAddonInfo('version')
-_addonID = _addon.getAddonInfo('id')
-_icon = _addon.getAddonInfo('icon')
-_fanart = _addon.getAddonInfo('fanart')
-_path = _addon.getAddonInfo('path')
-_ipath = _path + '/resources/images/'
-_settings = _addon.getSetting
-_changelog = _path + '/changelog.txt'
+from resources.lib.base import _addon, _addonname, _version, _addonID, _icon, _fanart, _path, _ipath, _settings, _changelog
+from resources.lib.base import check_hosted_media
+
 kodiver = float(xbmc.getInfoLabel('System.BuildVersion')[0:3])
 msites = [
     'tgun', 'tamilian', 'tyogi', 'awatch', 'torm',
@@ -328,6 +321,7 @@ def list_items(site, iurl):
                         poster = meta.get('cover_url')
                     meta.pop('backdrop_url')
                     meta.pop('cover_url')
+                    meta.pop('cast')
                     meta.update({'mediatype': 'movie'})
                     list_item.setInfo('video', meta)
 
@@ -378,7 +372,7 @@ def list_videos(site, title, iurl, thumb):
 
 
 def resolve_url(url):
-    hmf = resolveurl.HostedMediaFile(url=url)
+    hmf = check_hosted_media(url)
     if not hmf:
         xbmcgui.Dialog().ok('Resolve URL', 'Indirect hoster_url not supported by smr: {0}'.format(url))
         return False
@@ -719,7 +713,7 @@ def play_video(vid_url, dl=False):
         elif 'arydigital.' in vid_url:
             scraper = ary.ary()  # NoQA
             stream_url = scraper.get_video(vid_url)
-            if resolveurl.HostedMediaFile(stream_url):
+            if check_hosted_media(stream_url):
                 stream_url = resolve_url(stream_url)
             if stream_url:
                 play_item.setPath(stream_url)
@@ -748,7 +742,7 @@ def play_video(vid_url, dl=False):
             else:
                 play_item.setPath(None)
         elif '.mp4' in vid_url:
-            if '|' not in vid_url and resolveurl.HostedMediaFile(vid_url):
+            if '|' not in vid_url and check_hosted_media(vid_url):
                 stream_url = resolve_url(vid_url)
             else:
                 stream_url = vid_url

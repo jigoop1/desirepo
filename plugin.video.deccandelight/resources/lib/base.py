@@ -16,6 +16,9 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
+from importlib import import_module
+import os
+import traceback
 import base64
 import json
 import re
@@ -26,8 +29,6 @@ from bs4 import BeautifulSoup, SoupStrainer
 from kodi_six import xbmc, xbmcaddon, xbmcgui, xbmcvfs
 from resources.lib import client, jsunpack
 from six.moves import urllib_parse
-
-import resolveurl
 
 try:
     import StorageServer
@@ -46,6 +47,7 @@ _ppath = _addon.getAddonInfo('profile')
 _ipath = _path + '/resources/images/'
 _settings = _addon.getSetting
 _timeout = _settings('timeout')
+_changelog = _path + '/changelog.txt'
 PY2 = six.PY2
 LOGINFO = xbmc.LOGNOTICE if PY2 else xbmc.LOGINFO
 TRANSLATEPATH = xbmc.translatePath if PY2 else xbmcvfs.translatePath
@@ -74,6 +76,11 @@ def clear_cache():
     xbmcgui.Dialog().notification(_addonname, msg, _icon, 3000, False)
 
 
+def check_hosted_media(vid_url):
+    from resolveurl import HostedMediaFile
+    return HostedMediaFile(url=vid_url)
+
+
 class Scraper(object):
 
     def __init__(self):
@@ -88,7 +95,7 @@ class Scraper(object):
         self.adult = _settings('adult') == 'true'
         self.mirror = _settings('mirror') == 'true'
         self.nicon = self.ipath + 'next.png'
-        self.hmf = resolveurl.HostedMediaFile
+        self.hmf = check_hosted_media
 
     class Thread(threading.Thread):
         def __init__(self, target, *args):
@@ -182,6 +189,8 @@ class Scraper(object):
                       'etcsrs.', 'tvpost.cc', 'tellygossips.']
 
         headers = {}
+        self.log(f'>>>> resolve_media In url  {url}')
+        if any(re.findall(r'facebook.com/sharer.php|twitter.com/intent|pinterest.com/pin|l/email-protection#|tumblr.com/share|reddit.com/submit', str(url), re.IGNORECASE)): return 
         if '|' in url:
             url, hdrs = url.split('|')
             hitems = hdrs.split('&')
@@ -190,7 +199,7 @@ class Scraper(object):
                 headers.update({hdr: value})
 
         if url.startswith('magnet:'):
-            if resolveurl.HostedMediaFile(url):
+            if self.hmf(url):
                 vidhost = '[COLOR red]Magnet[/COLOR]'
                 r = re.search(r'(\d+(?:p|mb|gb))', url.replace('%20', ' '), re.I)
                 if r:
@@ -221,7 +230,7 @@ class Scraper(object):
                 emdiv = client.request(eurl, post=values, headers=headers, cookie=cookie)
                 emdiv = json.loads(emdiv).get('embed')
                 strurl = re.findall('(http[^"]+)', emdiv)[0]
-                if resolveurl.HostedMediaFile(strurl):
+                if self.hmf(strurl):
                     vidhost = self.get_vidhost(strurl)
                     if vidtxt != '':
                         vidhost += ' | %s' % vidtxt
@@ -352,7 +361,7 @@ class Scraper(object):
 
             try:
                 strurl = re.findall('''(?i)<iframe.+?src=["']([^'"]+)''', html)[0]
-                if resolveurl.HostedMediaFile(strurl):
+                if self.hmf(strurl):
                     vidhost = self.get_vidhost(strurl)
                     if (vidhost, strurl) not in videos:
                         videos.append((vidhost, strurl))
@@ -447,7 +456,7 @@ class Scraper(object):
                             if (vidhost, strlink) not in videos:
                                 videos.append((vidhost, strlink))
                         else:
-                            if resolveurl.HostedMediaFile(iurl):
+                            if self.hmf(iurl):
                                 vidhost = self.get_vidhost(iurl)
                                 if (vidhost, iurl) not in videos:
                                     videos.append((vidhost, iurl))
@@ -515,7 +524,7 @@ class Scraper(object):
                         etext = urllib_parse.unquote(etext)
                         dclass = BeautifulSoup(etext, "html.parser")
                     glink = dclass.iframe.get('src')
-                    if resolveurl.HostedMediaFile(glink):
+                    if self.hmf(glink):
                         vidhost = self.get_vidhost(glink)
                         if (vidhost, glink) not in videos:
                             videos.append((vidhost, glink))
@@ -526,7 +535,7 @@ class Scraper(object):
                     mlink = SoupStrainer('div', {'class': re.compile('^item-content')})
                     dclass = BeautifulSoup(link, "html.parser", parse_only=mlink)
                     glink = dclass.p.iframe.get('src')
-                    if resolveurl.HostedMediaFile(glink):
+                    if self.hmf(glink):
                         vidhost = self.get_vidhost(glink)
                         if (vidhost, glink) not in videos:
                             videos.append((vidhost, glink))
@@ -539,7 +548,7 @@ class Scraper(object):
                         glink = re.findall(r"file\s*:\s*'(.*?)'", linkcode)[0]
                     if 'youtu.be' in glink:
                         glink = 'https://docs.google.com/vt?id=' + glink[16:]
-                    if resolveurl.HostedMediaFile(glink):
+                    if self.hmf(glink):
                         vidhost = self.get_vidhost(glink)
                         if (vidhost, glink) not in videos:
                             videos.append((vidhost, glink))
@@ -615,7 +624,7 @@ class Scraper(object):
                                     if (vidhost, glink) not in videos:
                                         videos.append((vidhost, glink))
                         else:
-                            if resolveurl.HostedMediaFile(blink):
+                            if self.hmf(blink):
                                 vidhost = self.get_vidhost(blink)
                                 if (vidhost, blink) not in videos:
                                     videos.append((vidhost, blink))
@@ -641,7 +650,7 @@ class Scraper(object):
                 for citem in citems:
                     link = citem.get('data-video')
                     if link and 'vidnext.net' not in link:
-                        if resolveurl.HostedMediaFile(link):
+                        if self.hmf(link):
                             vidhost = self.get_vidhost(link)
                             if vidtxt != '':
                                 vidhost += ' | %s' % vidtxt
@@ -656,7 +665,7 @@ class Scraper(object):
                 ehtml = client.request(url, headers=headers)
                 s = re.search(r'''<iframe.+?src=['"]([^'"]+)''', ehtml, re.IGNORECASE)
                 if s:
-                    if resolveurl.HostedMediaFile(s.group(1)):
+                    if self.hmf(s.group(1)):
                         vidhost = self.get_vidhost(s.group(1))
                         if vidtxt != '':
                             vidhost += ' | %s' % vidtxt
@@ -672,7 +681,7 @@ class Scraper(object):
             ehtml = client.request(url, headers=headers)
             s = re.search(r'''<iframe.+?src=['"]([^'"]+)''', ehtml, re.IGNORECASE)
             if s:
-                if resolveurl.HostedMediaFile(s.group(1)):
+                if self.hmf(s.group(1)):
                     vidhost = self.get_vidhost(s.group(1))
                     if vidtxt != '':
                         vidhost += ' | %s' % vidtxt
@@ -795,7 +804,7 @@ class Scraper(object):
                         vidcount += 1
                     elif not any([x in strurl for x in non_str_list]) and not any([x in strurl for x in embed_list]):
                         # self.log('-------> sending to resolveurl for checking : %s' % strurl)
-                        if resolveurl.HostedMediaFile(strurl):
+                        if self.hmf(strurl):
                             vidhost = self.get_vidhost(strurl)
                             if vidtxt != '':
                                 vidhost += ' | %s' % vidtxt
@@ -841,7 +850,7 @@ class Scraper(object):
                 plink = csoup.find('a', {'class': 'main-button dlbutton'})
                 strurl = plink.get('href')
                 if not any([x in strurl for x in non_str_list]):
-                    if resolveurl.HostedMediaFile(strurl):
+                    if self.hmf(strurl):
                         vidhost = self.get_vidhost(strurl)
                         if vidtxt != '':
                             vidhost += ' | %s' % vidtxt
@@ -857,7 +866,7 @@ class Scraper(object):
                 plink = csoup.find('div', {'class': 'aio-pulse'})
                 strurl = plink.find('a')['href']
                 if not any([x in strurl for x in non_str_list]) and not any([x in strurl for x in embed_list]):
-                    if resolveurl.HostedMediaFile(strurl):
+                    if self.hmf(strurl):
                         vidhost = self.get_vidhost(strurl)
                         if vidtxt != '':
                             vidhost += ' | {}'.format(vidtxt)
@@ -873,7 +882,7 @@ class Scraper(object):
                 plink = csoup.find('div', {'class': re.compile('entry-content')})
                 strurl = plink.find('a')['href']
                 if not any([x in strurl for x in non_str_list]) and not any([x in strurl for x in embed_list]):
-                    if resolveurl.HostedMediaFile(strurl):
+                    if self.hmf(strurl):
                         vidhost = self.get_vidhost(strurl)
                         if vidtxt != '':
                             vidhost += ' | %s' % vidtxt
@@ -889,7 +898,7 @@ class Scraper(object):
                 for linksSection in csoup.find_all('embed'):
                     strurl = linksSection.get('src')
                     if not any([x in strurl for x in non_str_list]) and not any([x in strurl for x in embed_list]):
-                        if resolveurl.HostedMediaFile(strurl):
+                        if self.hmf(strurl):
                             vidhost = self.get_vidhost(strurl)
                             if vidtxt != '':
                                 vidhost += ' | %s' % vidtxt
@@ -905,7 +914,7 @@ class Scraper(object):
                 plink = csoup.find('div', {'id': 'Proceed'})
                 strurl = plink.find('a')['href']
                 if not any([x in strurl for x in non_str_list]) and not any([x in strurl for x in embed_list]):
-                    if resolveurl.HostedMediaFile(strurl):
+                    if self.hmf(strurl):
                         vidhost = self.get_vidhost(strurl)
                         if vidtxt != '':
                             vidhost += ' | %s' % vidtxt
@@ -920,7 +929,7 @@ class Scraper(object):
             try:
                 vid = re.findall(r'tune\.pk[^?]+\?vid=([^&]+)', clink)[0]
                 strurl = 'https://tune.pk/video/{vid}/'.format(vid=vid)
-                if resolveurl.HostedMediaFile(strurl):
+                if self.hmf(strurl):
                     vidhost = self.get_vidhost(strurl)
                     if vidtxt != '':
                         vidhost += ' | %s' % vidtxt
@@ -947,7 +956,7 @@ class Scraper(object):
                 self.log('Could not process link : {}'.format(url))
 
         elif not any([x in url for x in non_str_list]):
-            if resolveurl.HostedMediaFile(url):
+            if self.hmf(url):
                 vidhost = self.get_vidhost(url)
                 if 'Referer' in headers.keys():
                     url = '{0}$${1}'.format(url, headers.get('Referer'))
