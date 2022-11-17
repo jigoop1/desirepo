@@ -47,9 +47,10 @@ _settings = _addon.getSetting
 _changelog = _path + '/changelog.txt'
 kodiver = float(xbmc.getInfoLabel('System.BuildVersion')[0:3])
 msites = [
-    'tgun', 'tamilian', 'tyogi', 'awatch', 'torm', 'kcine',
-    'hlinks', 'einthusan', 'mrulz', 'mghar', 'b2t', 'omg',
-    'wompk', 'cinevez', 'flinks', 'hflinks', 'bmov', 'ibomma'
+    'tgun', 'tamilian', 'tyogi', 'awatch', 'torm',
+    'hlinks', 'einthusan', 'mrulz', 'mghar', 'b2t',
+    'wompk', 'cinevez', 'flinks', 'hflinks', 'bmov',
+    'ibomma', 'todaypk', 'kcine', 'omg'
 ]
 pDialog = xbmcgui.DialogProgress()
 makeLegalFilename = xbmc.makeLegalFilename if six.PY2 else xbmcvfs.makeLegalFilename
@@ -85,10 +86,11 @@ sites = {'01tgun': 'Tamil Gun : [COLOR yellow]Tamil[/COLOR]',
          '42einthusan': 'Einthusan : [COLOR magenta]Various[/COLOR]',
          '43mrulz': 'Movie Rulz : [COLOR magenta]Various[/COLOR]',
          '44mghar': 'Movies Ghar : [COLOR magenta]Various[/COLOR]',
-         '45b2t': 'Bolly 2 Tolly : [COLOR magenta]Various[/COLOR]',
-         '46omg': 'Online Movies Gold : [COLOR magenta]Various[/COLOR]',
+         # '45b2t': 'Bolly 2 Tolly : [COLOR magenta]Various[/COLOR]',
+         # '46omg': 'Online Movies Gold : [COLOR magenta]Various[/COLOR]',
          '47wompk': 'Online Movies PK : [COLOR magenta]Various[/COLOR]',
          '49cinevez': 'Cine Vez : [COLOR magenta]Various[/COLOR]',
+         '50todaypk': 'TodayPk : [COLOR magenta]Various[/COLOR]',
          '52hflinks': 'Film Links 4U Pro : [COLOR magenta]Various[/COLOR]',
          '70thdbox': 'Tamil HD Box: [COLOR yellow]Tamil Catchup TV[/COLOR]',
          # '71bbt': 'BigBoss Tamil: [COLOR yellow]Tamil Catchup TV[/COLOR]',

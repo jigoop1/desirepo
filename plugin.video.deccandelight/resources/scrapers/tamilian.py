@@ -23,8 +23,6 @@ from resources.lib import client
 from resources.lib.base import Scraper
 from six.moves import urllib_parse
 
-import resolveurl
-
 
 class tamilian(Scraper):
     def __init__(self):
@@ -104,7 +102,7 @@ class tamilian(Scraper):
             pass
 
         eurl = re.findall(r'<iframe.+?src="([^"]+)', html, re.I)[0].split('?')[0]
-        if resolveurl.HostedMediaFile(eurl).valid_url():
+        if self.hmf(eurl):
             return '{0}$${1}'.format(eurl, purl)
 
         self.log('{0} not resolvable {1}.\n'.format(url, eurl))

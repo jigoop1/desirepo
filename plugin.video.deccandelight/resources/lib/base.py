@@ -88,6 +88,7 @@ class Scraper(object):
         self.adult = _settings('adult') == 'true'
         self.mirror = _settings('mirror') == 'true'
         self.nicon = self.ipath + 'next.png'
+        self.hmf = resolveurl.HostedMediaFile
 
     class Thread(threading.Thread):
         def __init__(self, target, *args):

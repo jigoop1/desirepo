@@ -26,7 +26,7 @@ from six.moves import urllib_parse
 class hlinks(Scraper):
     def __init__(self):
         Scraper.__init__(self)
-        self.bu = 'https://www.hindilinks4u.to/category/'
+        self.bu = 'https://hindilinks4u.skin/category/'
         self.icon = self.ipath + 'hlinks.png'
         self.list = {'01Hindi Movies': self.bu + 'hindi-movies/',
                      '02Dubbed Movies': self.bu + 'dubbed-movies/',

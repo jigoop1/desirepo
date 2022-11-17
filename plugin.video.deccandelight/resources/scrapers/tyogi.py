@@ -22,13 +22,11 @@ from resources.lib import client
 from resources.lib.base import Scraper
 from six.moves import urllib_parse
 
-import resolveurl
-
 
 class tyogi(Scraper):
     def __init__(self):
         Scraper.__init__(self)
-        self.bu = 'https://tamilyogi.city/home/'
+        self.bu = 'https://tamilyogi.kim/home/'
         self.icon = self.ipath + 'tyogi.png'
 
     def get_menu(self):
@@ -82,13 +80,10 @@ class tyogi(Scraper):
 
     def get_video(self, url):
         html = client.request(url, referer=self.bu)
-        regex = r"<iframe\s*srcdoc.+?iframe>"
-        html = re.sub(regex, '', html, 0, re.MULTILINE)
         mlink = SoupStrainer('div', {'class': 'entry'})
         mdiv = BeautifulSoup(html, "html.parser", parse_only=mlink)
-        mdiv.find('aside').decompose()
         eurl = mdiv.iframe.get('src')
-        if resolveurl.HostedMediaFile(eurl):
+        if self.hmf(eurl):
             return eurl
 
         self.log('%s not resolvable.\n' % eurl)
